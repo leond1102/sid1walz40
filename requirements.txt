@@ -1,0 +1,8 @@
+opencv-python>=4.8
+numpy
+pyyaml
+python-dotenv
+pyserial
+transitions
+loguru
+paho-mqtt
