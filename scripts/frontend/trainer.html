@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WALZ 4.0 – Bewegungstraining</title>
+  <link rel="icon" href="walz_logo.png">
+  <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="trainer.css">
+</head>
+<body>
+  <header class="topbar">
+    <img class="logo" src="walz_logo.png" alt="WALZ 4.0">
+    <div class="topbar-divider"></div>
+    <div class="state-badge" id="state-badge" data-state="offline">
+      <span class="state-name" id="state-name">–</span>
+      <span class="state-text">Bewegungstraining</span>
+    </div>
+    <div class="topbar-message" id="message"></div>
+    <div class="pill" id="pill-tracker">Ortung</div>
+    <div class="pill" id="pill-broker">Broker</div>
+    <div class="pill" id="pill-station">Station</div>
+    <div class="clock" id="clock">--:--:--</div>
+  </header>
+
+  <main class="tgrid">
+    <section class="feed" id="feed">
+      <div class="panel-head"><span class="dot"></span><span>SID-Ortung (Arducam, ArUco)</span><span class="feed-meta" id="feed-meta"></span></div>
+      <div class="feed-body">
+        <img alt="" id="feed-img">
+        <div class="feed-info" id="feed-info"></div>
+        <div class="feed-stale"><strong>KEIN BILD</strong><span id="feed-note"></span></div>
+      </div>
+    </section>
+
+    <section class="console">
+      <div class="panel-head">
+        <span>Ausgabe</span>
+        <label class="follow"><input type="checkbox" id="follow" checked> mitlaufen</label>
+      </div>
+      <pre id="console"></pre>
+    </section>
+
+    <aside class="side">
+      <div class="job" id="job">
+        <div class="panel-head"><span id="job-title">Kein Lauf</span><span class="job-state" id="job-state"></span></div>
+        <div class="job-body">
+          <div class="progress-line">
+            <div class="bar"><div class="fill" id="job-fill"></div></div>
+            <span id="job-count"></span>
+          </div>
+          <div class="kv"><span class="label">Aktuell</span><span id="job-current">–</span></div>
+          <div class="kv"><span class="label">Letztes Ergebnis</span><span id="job-result">–</span></div>
+          <div class="kv distance" id="distance-row">
+            <span class="label">Abstand zum Start</span>
+            <div class="dist">
+              <div class="dist-bar"><div class="dist-fill" id="dist-fill"></div><div class="dist-mark" id="dist-ws" title="Arbeitsbereich"></div></div>
+              <span id="dist-text">–</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="collect" role="tab">Sammeln</button>
+        <button class="tab" data-tab="train" role="tab">Trainieren</button>
+        <button class="tab" data-tab="data" role="tab">Daten</button>
+      </div>
+
+      <div class="tab-body" id="tab-collect">
+        <div class="section-title label">Trainings-Policy</div>
+        <div class="policies" id="policies" role="radiogroup"></div>
+        <div class="options">
+          <label class="field">Samples <input type="number" id="samples" min="1" max="5000"></label>
+          <label class="check"><input type="checkbox" id="sim"> Simulation (ohne Roboter)</label>
+        </div>
+        <div class="groups hidden" id="groups-box">
+          <span class="label">Gruppen</span>
+          <div id="groups"></div>
+        </div>
+        <p class="hint" id="collect-hint"></p>
+        <button class="big-action start" id="collect-start">▶ SAMMELN STARTEN</button>
+      </div>
+
+      <div class="tab-body hidden" id="tab-train">
+        <div class="section-title label">Modell</div>
+        <div class="segmented" id="model-choice"></div>
+        <div class="section-title label">Datensätze</div>
+        <ul class="filelist" id="train-files"></ul>
+        <div class="options">
+          <label class="check"><input type="checkbox" id="no-plots"> ohne Diagramme</label>
+          <label class="check"><input type="checkbox" id="no-cv"> ohne Kreuzvalidierung (schneller)</label>
+        </div>
+        <button class="big-action start" id="train-start">▶ TRAINIEREN</button>
+        <div class="section-title label">Kandidaten (noch nicht aktiv)</div>
+        <ul class="filelist" id="candidates"></ul>
+        <div class="section-title label">Aktive Modelle (models/)</div>
+        <ul class="filelist" id="active-models"></ul>
+      </div>
+
+      <div class="tab-body hidden" id="tab-data">
+        <div class="section-title label">Datensätze (data/datasets, data/nav_logs)</div>
+        <table class="datatable"><thead><tr><th>Datei</th><th>Zeilen</th><th>Stand</th></tr></thead><tbody id="datasets"></tbody></table>
+        <div class="section-title label">Diagramme (data/plots)</div>
+        <div class="plots" id="plots"></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="controls">
+    <div class="footer-note">Läuft die Station (main.py), ist Sammeln mit dem echten Roboter gesperrt. Simulation geht immer.</div>
+    <div class="spacer"></div>
+    <button class="ctl quit" id="quit-btn"><span class="ico">✕</span><span class="txt">BEENDEN</span><kbd>F10</kbd></button>
+    <button class="ctl estop" id="stop-btn"><span class="txt">STOPP</span><kbd>Leertaste</kbd></button>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="overlay" id="disconnected" hidden>
+    <div class="overlay-box">
+      <strong id="disconnected-title">KEINE VERBINDUNG</strong>
+      <span id="disconnected-text">Läuft <code>trainer.py</code> noch? Es wird automatisch neu verbunden.</span>
+    </div>
+  </div>
+
+  <dialog class="settings confirm" id="confirm-collect">
+    <form method="dialog">
+      <h2>Roboter bewegt sich</h2>
+      <p class="hint" id="confirm-collect-text"></p>
+      <ul class="checklist">
+        <li>Fahrbereich frei, niemand im Umkreis von ca. <span id="confirm-radius">1,6</span> m um den SID</li>
+        <li>SID steht frei, nicht in der Sicherheitszone oder im Dock</li>
+        <li>Die Ortung sieht den SID (rechts oben grün)</li>
+      </ul>
+      <p class="hint">Anhalten jederzeit mit STOPP oder der Leertaste.</p>
+      <div class="dialog-buttons">
+        <div class="spacer"></div>
+        <button type="button" id="collect-cancel">Abbrechen</button>
+        <button type="button" id="collect-confirm" class="danger">Starten</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="settings confirm" id="confirm-quit">
+    <form method="dialog">
+      <h2>Bewegungstraining beenden?</h2>
+      <p class="hint" id="quit-text">Das Programm und dieses Fenster werden geschlossen.</p>
+      <div class="dialog-buttons">
+        <div class="spacer"></div>
+        <button type="button" id="quit-cancel">Abbrechen</button>
+        <button type="button" id="quit-confirm" class="danger">Beenden <kbd>F10</kbd></button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="settings plot-view" id="plot-view">
+    <form method="dialog">
+      <h2 id="plot-title"></h2>
+      <img id="plot-img" alt="">
+      <div class="dialog-buttons"><div class="spacer"></div><button type="submit">Schließen</button></div>
+    </form>
+  </dialog>
+
+  <script src="trainer.js"></script>
+</body>
+</html>

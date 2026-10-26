@@ -1,0 +1,29 @@
+# Bedienoberfläche der Station (scripts/station_frontend.py, gestartet von main.py)
+# Die Tastenkürzel stehen in config/hotkeys.yaml (im Frontend auch über ⚙ änderbar).
+
+server:
+  # 127.0.0.1 = nur auf diesem Rechner erreichbar.
+  # 0.0.0.0 = auch von anderen Rechnern im Netz. ACHTUNG: dann kann jeder im Netz die Station bedienen!
+  host: 127.0.0.1
+  port: 8080
+
+browser:
+  open: true          # beim Start ein Vollbildfenster öffnen (python main.py --no-window: nie)
+  # auto = Chromium/Chrome oder Firefox im Kiosk-Modus (eigenes Profil, beenden mit Alt+F4).
+  # Eigener Befehl, {url} wird ersetzt, z. B.: "chromium --kiosk {url}"
+  command: auto
+
+# Die beiden Kamerabilder (links, rechts). Mögliche Quellen:
+#   yolo                    Bild der YOLO-Kamera (IR) mit den erkannten Stützen
+#   camera:<Name|Nummer>    eigene USB-Kamera, z. B. camera:2 (/dev/video2) oder camera:logitech
+#                           (Teilstring des Gerätenamens, siehe /sys/class/video4linux/videoN/name)
+#   mqtt:<Topic>            JPEG-Bilder per MQTT, z. B. das Vorschaubild der SID-Ortung
+feeds:
+  gripper:
+    title: Kamera Greifarm
+    source: yolo
+  aruco:
+    title: SID-Ortung (Arducam, ArUco)
+    source: mqtt:station/tracker/preview
+
+stale_after_s: 2.0    # so lange kein neues Bild -> Anzeige "KEIN BILD"

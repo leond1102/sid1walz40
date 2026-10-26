@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Symbol der Station: Greifarm auf dunklem Grund, grüner Startpunkt -->
+  <rect x="4" y="4" width="120" height="120" rx="24" fill="#151b23" stroke="#4c9bff" stroke-width="4"/>
+  <rect x="26" y="96" width="44" height="10" rx="3" fill="#8b949e"/>
+  <circle cx="48" cy="88" r="9" fill="#e6edf3"/>
+  <path d="M48 88 L40 54 L74 36" fill="none" stroke="#e6edf3" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="40" cy="54" r="6" fill="#4c9bff"/>
+  <circle cx="74" cy="36" r="6" fill="#4c9bff"/>
+  <path d="M78 30 L92 22 M80 40 L94 46" stroke="#e3b341" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="96" cy="94" r="16" fill="#3fb950"/>
+  <path d="M91 85 L105 94 L91 103 Z" fill="#0d1117"/>
+</svg>

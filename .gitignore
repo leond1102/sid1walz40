@@ -1,0 +1,21 @@
+
+# Logdateien der Station (main.py)
+logs/
+
+# Python-Zwischendateien
+__pycache__/
+.pytest_cache/
+
+# Kandidaten aus dem Trainingsprogramm (noch nicht übernommen)
+models/kandidaten/
+
+# Virtuelle Umgebung und IDE
+.venv/
+.idea/
+
+# Trainingsdaten und Modelle (nicht im Repo)
+data/
+models/
+
+# Archiv
+sid1walz40_code.zip

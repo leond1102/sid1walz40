@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WALZ 4.0 – Station</title>
+  <link rel="icon" href="walz_logo.png">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="topbar">
+    <img class="logo" src="walz_logo.png" alt="WALZ 4.0">
+    <div class="topbar-divider"></div>
+    <div class="state-badge" id="state-badge" data-state="offline">
+      <span class="state-name" id="state-name">–</span>
+      <span class="state-text" id="state-text">verbinde …</span>
+    </div>
+    <div class="topbar-phase">
+      <span class="label">Abschnitt</span>
+      <span id="phase">–</span>
+    </div>
+    <div class="topbar-message" id="message" title="letzte Meldung der Station"></div>
+    <div class="pill" id="systems-summary">Systeme …</div>
+    <div class="clock" id="clock">--:--:--</div>
+  </header>
+
+  <main class="grid">
+    <section class="feed" id="feed-0">
+      <div class="panel-head"><span class="dot"></span><span class="feed-title"></span><span class="feed-meta"></span></div>
+      <div class="feed-body">
+        <img alt="">
+        <div class="feed-info"></div>
+        <div class="feed-stale"><strong>KEIN BILD</strong><span class="feed-note"></span></div>
+      </div>
+    </section>
+    <section class="feed" id="feed-1">
+      <div class="panel-head"><span class="dot"></span><span class="feed-title"></span><span class="feed-meta"></span></div>
+      <div class="feed-body">
+        <img alt="">
+        <div class="feed-info"></div>
+        <div class="feed-stale"><strong>KEIN BILD</strong><span class="feed-note"></span></div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="panel-head">Systeme</div>
+      <ul class="systems" id="systems"></ul>
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="alarms" role="tab">Fehlermeldungen <span class="count" id="alarm-count">0</span></button>
+        <button class="tab" data-tab="log" role="tab">Meldungen</button>
+      </div>
+      <ol class="list" id="alarms"></ol>
+      <ol class="list hidden" id="log"></ol>
+    </aside>
+
+    <section class="sequence">
+      <div class="panel-head">
+        <span>Ablauf</span>
+        <span class="seq-counter" id="seq-counter"></span>
+      </div>
+      <div class="progress" id="progress"></div>
+      <div class="trio">
+        <div class="card prev">
+          <span class="card-label">Vorheriger Schritt</span>
+          <span class="card-text" id="step-prev">–</span>
+        </div>
+        <div class="arrow">›</div>
+        <div class="card current" id="card-current">
+          <span class="card-label"><span id="step-status">Aktueller Schritt</span><span class="card-tag" id="step-tag"></span></span>
+          <span class="card-text" id="step-current">–</span>
+          <span class="card-band" id="step-band"></span>
+        </div>
+        <div class="arrow">›</div>
+        <div class="card next">
+          <span class="card-label">Nächster Schritt</span>
+          <span class="card-text" id="step-next">–</span>
+        </div>
+      </div>
+      <div class="states">
+        <span class="label">Zustand</span>
+        <div class="chips" id="state-chips"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="mode" id="mode" role="radiogroup" aria-label="Ablauf"></div>
+    <button class="ctl start" data-action="start"><span class="ico">▶</span><span class="txt">START</span><kbd></kbd></button>
+    <button class="ctl pause" data-action="pause"><span class="ico">❚❚</span><span class="txt">PAUSE</span><kbd></kbd></button>
+    <button class="ctl stop" data-action="stop"><span class="ico">■</span><span class="txt">STOP</span><kbd></kbd></button>
+    <button class="ctl ack" data-action="ack"><span class="ico">✓</span><span class="txt">QUITTIEREN</span><kbd></kbd></button>
+    <div class="spacer"></div>
+    <button class="ctl settings" id="open-settings" title="Tastenkürzel einstellen"><span class="ico">⚙</span><span class="txt">Tasten</span></button>
+    <button class="ctl quit" data-action="quit" title="Programm beenden"><span class="ico">✕</span><span class="txt">BEENDEN</span><kbd></kbd></button>
+    <button class="ctl estop" data-action="estop"><span class="txt">NOT-AUS</span><kbd></kbd></button>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="overlay" id="disconnected" hidden>
+    <div class="overlay-box">
+      <strong id="disconnected-title">KEINE VERBINDUNG ZUR STATION</strong>
+      <span id="disconnected-text">Die Anzeige ist nicht aktuell. Läuft <code>main.py</code> noch? Es wird automatisch neu verbunden.</span>
+    </div>
+  </div>
+
+  <dialog class="settings confirm" id="confirm-quit">
+    <form method="dialog">
+      <h2>Programm beenden?</h2>
+      <p class="hint" id="quit-text">Alle Geräte werden gestoppt, die Ortung und dieses Fenster werden geschlossen.</p>
+      <p class="hint">Neu starten über das Symbol „Station“ auf dem Schreibtisch.</p>
+      <div class="dialog-buttons">
+        <div class="spacer"></div>
+        <button type="button" id="quit-cancel">Abbrechen</button>
+        <button type="button" id="quit-confirm" class="danger">Beenden <kbd id="quit-kbd"></kbd></button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="settings" id="settings">
+    <form method="dialog">
+      <h2>Tastenkürzel</h2>
+      <p class="hint">Auf „Ändern“ klicken und die neue Taste (oder Kombination mit Strg/Alt/Umschalt) drücken.
+        Gespeichert wird in <code>config/hotkeys.yaml</code>.</p>
+      <table>
+        <tbody id="hotkey-rows"></tbody>
+      </table>
+      <p class="error" id="settings-error"></p>
+      <div class="dialog-buttons">
+        <button type="button" id="hotkeys-default">Standard</button>
+        <div class="spacer"></div>
+        <button type="button" id="hotkeys-cancel">Abbrechen</button>
+        <button type="button" id="hotkeys-save" class="primary">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Station – Funktion des Codes (A4)</title>
+<style>
+  /* Eine A4-Seite im WALZ-4.0-Design: weiß, dünne schwarze Linien, keine Rundungen.
+     PDF: docs/UEBERSICHT_A4.pdf (im Browser drucken: A4, Ränder „keine“, Hintergrund an). */
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; border-radius: 0; }
+  html, body { margin: 0; background: #fff; color: #000; }
+  body {
+    width: 210mm;
+    height: 297mm;
+    padding: 11mm 12mm 9mm;
+    font-family: "Helvetica Neue", Helvetica, Arial, "Liberation Sans", "Nimbus Sans", sans-serif;
+    font-size: 8.5pt;
+    line-height: 1.28;
+    overflow: hidden;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 5mm;
+    padding-bottom: 3mm;
+    border-bottom: 1.5pt solid #000;
+    margin-bottom: 3mm;
+  }
+  header img { height: 8mm; }
+  header .sep { align-self: stretch; width: 0.6pt; background: #000; }
+  header h1 { margin: 0; font-size: 12.5pt; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 800; white-space: nowrap; }
+  header .sub { font-size: 8pt; color: #444; letter-spacing: 0.04em; }
+  header .stand { margin-left: auto; text-align: right; font-size: 7.5pt; color: #444; }
+
+  .lead { margin: 0 0 2.6mm; font-size: 8.4pt; }
+  .cols { column-count: 2; column-gap: 4mm; }
+  .box { border: 0.6pt solid #000; padding: 2mm 2.4mm 2mm; break-inside: avoid; margin-bottom: 2.6mm; }
+  .wide { margin-bottom: 2.6mm; }
+  h2 {
+    margin: -2mm -2.4mm 1.4mm;
+    padding: 0.8mm 2.4mm;
+    background: #000;
+    color: #fff;
+    font-size: 7.6pt;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 800;
+  }
+  p { margin: 0 0 1.2mm; }
+  p:last-child { margin-bottom: 0; }
+  ol, ul { margin: 0; padding-left: 4mm; }
+  li { margin: 0 0 0.7mm; }
+  li:last-child { margin-bottom: 0; }
+  b { font-weight: 800; }
+  code { font-family: "DejaVu Sans Mono", ui-monospace, monospace; font-size: 7.2pt; }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { padding: 0.55mm 1.2mm 0.55mm 0; vertical-align: top; text-align: left; }
+  tr + tr td { border-top: 0.4pt solid #ccc; }
+  th { font-size: 6.8pt; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 0.6pt solid #000; }
+  td:first-child { white-space: nowrap; font-weight: 700; }
+
+  /* Bausteine als Blockbild */
+  .arch { display: grid; grid-template-columns: 1fr 9mm 1.4fr 9mm 1fr; align-items: center; row-gap: 1mm; }
+  .node { border: 0.6pt solid #000; padding: 0.7mm 1.4mm; text-align: center; font-size: 7.3pt; line-height: 1.2; }
+  .node b { display: block; font-size: 7.6pt; letter-spacing: 0.04em; }
+  .node.main { grid-row: 1 / span 3; grid-column: 3; padding: 1.4mm; border-width: 1.4pt; }
+  .arrow { text-align: center; font-size: 7pt; color: #333; line-height: 1.1; }
+  .chain { font-family: "DejaVu Sans Mono", ui-monospace, monospace; font-size: 7.2pt; margin: 0.6mm 0 1.2mm; }
+  .k { display: inline-block; border: 0.6pt solid #000; padding: 0 1mm; font-family: "DejaVu Sans Mono", monospace; font-size: 7pt; }
+  .stop { color: #c62828; font-weight: 800; }
+  footer { margin-top: 2.5mm; padding-top: 1.5mm; border-top: 0.6pt solid #000; font-size: 7pt; color: #444; display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+<header>
+  <img src="walz_4.0_logo-horizontal.png" alt="WALZ 4.0">
+  <div class="sep"></div>
+  <div>
+    <h1>Station – Funktion des Codes</h1>
+    <div class="sub">Stützen verteilen und einsammeln · Python, MQTT, Browser-Frontends</div>
+  </div>
+  <div class="stand">Stand 25.10.2026<br>Ausführlich: docs/DOKUMENTATION.md</div>
+</header>
+
+<p class="lead">Ein vierbeiniger Roboter (<b>SID</b>, DEEP Robotics Lite3) mit Greifer auf dem Rücken verteilt drei
+Metallstützen auf feste Plätze und holt sie wieder ab. Ein Linux-PC steuert alles: <code>main.py</code> führt den Ablauf
+aus (Frontend :8080), <code>trainer.py</code> bringt dem SID neue Bewegungen bei (eigenes Programm, Frontend :8081).</p>
+
+<div class="box wide">
+    <h2>Aufbau</h2>
+    <div class="arch">
+      <div class="node"><b>Frontend :8080</b>Browser, Knöpfe, Kamerabilder</div>
+      <div class="arrow">HTTP<br>⇄</div>
+      <div class="node main"><b>main.py · Station</b>Zustandsautomat (<code>transitions</code>)<br>Ablauf = Liste von 68 Schritten<br>
+        Systemübersicht, Fehlermeldungen<br>Befehle: Frontend, Tastatur, MQTT <code>station/cmd</code><br>
+        alle MQTT-Wege über den Broker 192.168.2.1</div>
+      <div class="arrow">UDP<br>⇄</div>
+      <div class="node"><b>SID (Lite3)</b>läuft, dockt, trägt Greifer</div>
+
+      <div class="node"><b>SID-Ortung</b>Arducam an der Decke, ArUco-Marker → Pose x, y, θ</div>
+      <div class="arrow">MQTT<br>→</div>
+      <div class="arrow">MQTT<br>⇄</div>
+      <div class="node"><b>Greifer</b>ESP32: Linearachse + Servozange</div>
+
+      <div class="node"><b>Stützenerkennung</b>IR-Kamera + YOLO-Modell (USB)</div>
+      <div class="arrow">USB<br>→</div>
+      <div class="arrow">MQTT<br>⇄</div>
+      <div class="node"><b>Fließband</b>ESP32: bringt Stütze zum Dock</div>
+
+    </div>
+  </div>
+
+<div class="cols">
+  <div class="box">
+    <h2>Ablauf „start“</h2>
+    <ol>
+      <li><b>Ausliefern ×3:</b> YOLO erkennt eine Stütze → ein Mensch stellt sie aufs Band (10 s) → Band fährt 18 s
+        zum Dock. Gleichzeitig fährt der SID zur Dock-Vorposition, dockt, greift, fährt heraus und stellt die
+        Stütze auf ihren Platz (2,0 | −0,6 / 0 / 0,6).</li>
+      <li><b>Pause:</b> 30 s am Warteplatz (1,5 | 0).</li>
+      <li><b>Zurückholen ×3:</b> anfahren, greifen, zur Abgabe (1,0 | 0,25) tragen, rückwärts heraus.</li>
+    </ol>
+    <p style="margin-top:1.2mm"><code>liefern</code> = nur 1, <code>holen</code> = nur 3. Pause hält nach dem laufenden Schritt an.</p>
+  </div>
+
+  <div class="box">
+    <h2>Zustandsautomat</h2>
+    <div class="chain">init → idle ⇄ running ⇄ paused<br>running → idle | docked | error<br>* → estop · error/estop → reset → idle</div>
+    <p>Arbeits-Threads (Ablauf, Band, Navigation) melden ihr Ergebnis als Trigger zurück; der Automat ist threadsicher.
+      Fehlt beim Start die Pose, misst die Station automatisch neu, sobald die Ortung den SID sieht.</p>
+  </div>
+
+  <div class="box">
+    <h2>Navigation</h2>
+    <p>Gelernte <b>Laufmodelle</b> (Physik-Grundlinie + Gaußprozess) sagen voraus, wohin ein Befehl
+      (vor, seitlich, drehen …, Dauer) den SID bringt. Regelkreis pro Schritt:</p>
+    <div class="chain">messen → planen → ausführen → stoppen → messen</div>
+    <p>Grob: drehen + gerade laufen; fein: Suche über Befehlsfolgen. Ziel ±5 cm / 5°.
+      Docken, Ausdocken und Abgabe laufen gerade ohne Drehen.</p>
+  </div>
+
+  <div class="box">
+    <h2>Sicherheit</h2>
+    <ul>
+      <li>Sicherheitszone x &lt; 1,2 m: nur Dock, Abgabe, Ausdocken – gerade, ohne Drehen.</li>
+      <li>Stopp, wenn die Pose älter als 1,5 s ist oder der SID &gt; 4 m vom Start entfernt.</li>
+      <li><span class="stop">NOT-AUS</span> (Leertaste, <code>estop</code>): SID, Band, Achse sofort stoppen.</li>
+      <li>Training fährt nur, wenn die Station aus ist und die Ortung trackt.</li>
+    </ul>
+  </div>
+
+  <div class="box">
+    <h2>Bedienung</h2>
+    <p><b>Station</b> (Symbol „Station“): <span class="k">F2</span> Start · <span class="k">F3</span> Pause/Weiter ·
+      <span class="k">F4</span> Stop · <span class="k">F8</span> Quittieren · <span class="k">Leertaste</span> <span class="stop">NOT-AUS</span> ·
+      <span class="k">F10</span> Beenden. Rechts oben „Systeme“: Broker, Ortung, SID, Band, Greifer, YOLO in grün/gelb/rot.</p>
+    <p><b>Bewegungstraining</b> (Symbol „Bewegungstraining“): Policy wählen (gerade, gemischt, Drehungen, fein)
+      → Daten sammeln (SID läuft Zufallsbefehle im 1-m-Umkreis) → trainieren → Kandidat übernehmen.</p>
+  </div>
+
+  <div class="box">
+    <h2>Code-Landkarte</h2>
+    <table>
+      <tr><td>main.py</td><td>Zustandsautomat, Ablauf, Befehle, Start und Ende</td></tr>
+      <tr><td>navigate.py</td><td>Planer, Sicherheitszone, Docken · <code>lite3_commander.py</code>: UDP an SID</td></tr>
+      <tr><td>aruco_tracker_calibrated.py</td><td>Ortung: Kamerabild → Pose per MQTT</td></tr>
+      <tr><td>arm_controller.py</td><td>Greifer (Grenzen in <code>arm_config.py</code>)</td></tr>
+      <tr><td>conveyor_controller.py</td><td>Fließband</td></tr>
+      <tr><td>F_stilt_erkennung_YOLO.py</td><td>IR-Kamera + YOLO</td></tr>
+      <tr><td>station_frontend.py</td><td>Frontend der Station, Systemübersicht</td></tr>
+      <tr><td>trainer_server.py</td><td>Bewegungstraining (mit <code>trainer.py</code>)</td></tr>
+      <tr><td>collect_*/train_*.py</td><td>Daten sammeln / Modelle trainieren</td></tr>
+    </table>
+  </div>
+
+  <div class="box">
+    <h2>Schnittstellen und Daten</h2>
+    <table>
+      <tr><td>station/cmd</td><td>Befehle als Text (start, stop, estop …)</td></tr>
+      <tr><td>station/state</td><td>Zustand als JSON (retained)</td></tr>
+      <tr><td>station/tracker/…</td><td>Pose, Status, Vorschaubild der Ortung</td></tr>
+      <tr><td>station/arm/…, conveyor…</td><td>Greifer und Band: Befehle, Zustand</td></tr>
+    </table>
+    <p style="margin-top:1.2mm"><code>models/</code> aktive Modelle · <code>data/</code> Trainingsdaten, Fahrlogs, Diagramme ·
+      <code>config/</code> Frontend und Tasten · <code>logs/</code> eine Logdatei pro Start.</p>
+  </div>
+</div>
+
+<footer>
+  <span>Start: Desktop-Symbol oder <code>python main.py</code> / <code>python trainer.py</code></span>
+  <span>Mehr: KURZFASSUNG.md · DOKUMENTATION.md · INBETRIEBNAHME.md</span>
+</footer>
+</body>
+</html>

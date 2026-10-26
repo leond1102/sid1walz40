@@ -1,0 +1,8 @@
+# Tastenkürzel des Frontends. Im Frontend über ⚙ änderbar – die Datei wird dann neu geschrieben.
+# Schreibweise: [Ctrl+][Alt+][Shift+]Taste, z. B. F2, Space, Enter, Escape, Ctrl+S, A, 1
+start: F2
+pause: F3
+stop: F4
+ack: F8
+estop: Space
+quit: F10
